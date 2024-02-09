@@ -2,7 +2,7 @@ Short - just do it on first time once:
 ======================================
 - run: ./scripts/onetime_get_ids.sh
 - Note the ID's you got
-- Update the ./config/.env file with values you note before
+- Update the ./config/.env file with values you note before (if not exists, create it as copy from file './config/.env.template')
 - Edit /etc/hosts or on Windows the Windows hosts file (see comments below in the "Long:" Section - Chapter "HOSTS:" => nearly at the end of this document)
 - That's all what you have to configure once!
 - To build and start just run: ./scripts/run.sh
