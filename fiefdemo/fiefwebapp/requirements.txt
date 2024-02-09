@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+makefun
+fief_client
+pydantic-settings

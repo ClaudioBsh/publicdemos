@@ -1,0 +1,157 @@
+version: '3.8'
+
+x-backend:
+  &backend
+  build: .
+  container_name: fief-api
+  volumes:
+  - ./app:/code/app
+  - ./config:/code/config
+  working_dir: /code/app
+  environment:
+    # Show output live in the console
+    PYTHONUNBUFFERED: 1
+    PYTHONPATH: "/code"
+  depends_on:
+    - db
+
+x-fief:
+  &fief-environment
+  environment:
+  - SECRET=${SECRET}
+  - FIEF_CLIENT_ID=${FIEF_CLIENT_ID}
+  - FIEF_CLIENT_SECRET=${FIEF_CLIENT_SECRET}
+  - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+  - PORT=${PORT}
+  - ROOT_DOMAIN=${ROOT_DOMAIN}
+  - FIEF_DOMAIN=${FIEF_DOMAIN}
+  - FIEF_SERVER_URL=${FIEF_SERVER_URL}
+  - FIEF_MAIN_USER_EMAIL=${FIEF_MAIN_USER_EMAIL}
+  - FIEF_MAIN_USER_PASSWORD=${FIEF_MAIN_USER_PASSWORD}
+  - DATABASE_TYPE=${DATABASE_TYPE}
+  - DATABASE_HOST=${DATABASE_HOST}
+  - DATABASE_PORT=${DATABASE_PORT}
+  - DATABASE_USERNAME=${DATABASE_USERNAME}
+  - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+  - DATABASE_NAME=${DATABASE_NAME}
+  - REDIS_URL=${REDIS_URL}
+  - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE}
+  - SESSION_DATA_COOKIE_SECURE=${SESSION_DATA_COOKIE_SECURE}
+  - USER_LOCALE_COOKIE_SECURE=${USER_LOCALE_COOKIE_SECURE}
+  - LOGIN_SESSION_COOKIE_SECURE=${LOGIN_SESSION_COOKIE_SECURE}
+  - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE}
+  - LOGIN_HINT_COOKIE_SECURE=${LOGIN_HINT_COOKIE_SECURE}
+  - REGISTRATION_SESSION_COOKIE_SECURE=${REGISTRATION_SESSION_COOKIE_SECURE}
+  - FORWARD_ALLOWED_IPS=${FORWARD_ALLOWED_IPS}
+  - TELEMETRY_ENABLED=${TELEMETRY_ENABLED}
+#  - FIEF_API_KEY=${FIEF_API_KEY}
+#  - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
+#  - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
+#  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
+  depends_on:
+  - db
+  - redis
+
+services:
+
+  traefik:
+    image: traefik:v2.4
+    container_name: fief-traefik
+    command:
+    - "--api.insecure=true"
+    - "--providers.docker=true"
+    - "--providers.docker.exposedbydefault=false"
+    - "--entrypoints.web.address=:80"
+    ports:
+    - 80:80
+    - 8080:8080  # For Traefik Dashboard
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - fief
+
+  api:
+    <<: *backend
+# Use command: only if you want to overwrite the default Dockerfile CMD!
+#    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    # HERE - Make external access possible (e.g. from Browser)
+    extra_hosts:
+    - "fief.mydomain.com:host-gateway"
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.api.rule=Host(`api.mydomain.com`)"
+    - "traefik.http.routers.api.entrypoints=web"
+    - "traefik.http.services.api.loadbalancer.server.port=8000"
+    expose:
+    - 8000
+
+  init-db:
+    image: postgres:16.1-alpine
+    container_name: fief-init-db
+    depends_on:
+      - db
+    volumes:
+      - ./scripts/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+    command: ['/docker-entrypoint-initdb.d/init_db.sh']
+
+  db:
+    container_name: fief-db
+    image: postgres:16.1-alpine
+    ports:
+    - 5432:5432
+    environment:
+      PGUSER: ${DATABASE_USERNAME}
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+    - fief-postgres-data:/var/lib/postgresql/data
+
+  redis:
+    container_name: fief-redis
+    image: redis:alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+    - fief-redis-data:/data
+
+  fief:
+    <<: *fief-environment
+    container_name: fief-server
+    image: ghcr.io/fief-dev/fief:0.27.0
+    command: fief run-server --port 8000
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.fief.rule=Host(`fief.mydomain.com`)"
+    - "traefik.http.routers.fief.entrypoints=web"
+    - "traefik.http.services.fief.loadbalancer.server.port=8000"
+    expose:
+    - 8000
+
+  worker:
+    <<: *fief-environment
+    container_name: fief-worker
+    image: ghcr.io/fief-dev/fief:0.27.0
+    command: fief run-worker -p 1 -t 1
+
+  web:
+    image: nginx:alpine
+    container_name: fief-web
+    volumes:
+    - ./web:/usr/share/nginx/html:ro
+    expose:
+    - "80"
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.web.rule=Host(`mydomain.com`)"
+    - "traefik.http.routers.web.entrypoints=web"
+    - "traefik.http.services.web.loadbalancer.server.port=80"
+
+volumes:
+  fief-redis-data:
+  fief-postgres-data:
