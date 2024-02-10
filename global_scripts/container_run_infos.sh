@@ -155,7 +155,7 @@ get_container_list() {
   elif [ "$#" -eq 1 ]; then
     echo "$1"
   else
-    docker ps --format '{{.Names}}'
+    docker ps -a --format '{{.Names}}'
   fi
 }
 

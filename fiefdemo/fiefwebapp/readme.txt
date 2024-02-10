@@ -21,6 +21,7 @@ https://docs.fief.dev/self-hosting/deployment/docker-compose/
 https://docs.fief.dev/integrate/python/fastapi/
 https://github.com/fief-dev/fief/pkgs/container/fief => AMD64 + ARM64:-)
 https://github.com/orgs/fief-dev/discussions
+https://github.com/orgs/fief-dev/discussions/335 => Introduced this FIEF Demo WebApp
 
 ------------------------------------
 
@@ -54,6 +55,11 @@ Note all the ID's you got and use it within your config/.env file!
 
 ------------------------------------
 
+"Internal Server Error" (http code 400, http code 500) when calling: fief.mydomain.com/admin
+Solution: ...open... todo - ask in the fief discussions!
+
+------------------------------------
+
 HOSTS:
 
 Instead using localhost (127.0.0.1) we will use an own local domain and will setup therefore this domain (and all subdomains too!)
@@ -77,6 +83,7 @@ WEB-Page:                 http://mydomain.com
 Traefik-Dashboard:        http://mydomain.com:8080
 FastAPI-Docs              http://api.mydomain.com/docs
 FIEF:                     http://fief.mydomain.com
+FIEF (admin):             http://fief.mydomain.com/admin
 
 ------------------------------------
 

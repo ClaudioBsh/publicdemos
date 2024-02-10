@@ -44,7 +44,7 @@ get_container_list() {
   if [ "$#" -eq 1 ] && [ -f "$1" ]; then
     cat "$1"
   else
-    docker ps --format '{{.Names}}'
+    docker ps -a --format '{{.Names}}'
   fi
 }
 

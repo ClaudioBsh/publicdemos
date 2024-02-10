@@ -1,14 +1,22 @@
 #!/bin/bash
 set -e
 
-#Will be called from docker-compose.yml!
+# WILL BE CALLED FROM INSIDE FIEF-DB CONTAINER!
 
-# PostgreSQL-Commands, check if database exists, if not create it
-export PGPASSWORD=$DATABASE_PASSWORD
-db_exists=$(psql -h $DATABASE_HOST -U $DATABASE_USERNAME -tAc "SELECT 1 FROM pg_database WHERE datname='$DATABASE_NAME'")
+export PGPASSWORD=$POSTGRES_PASSWORD
+
+echo "All tables:"
+psql -U $PGUSER -d $POSTGRES_DB -c "\dt"
+
+db_exists=$(psql -U $PGUSER -tAc "SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DB'")
 if [ "$db_exists" = "1" ]; then
-    echo "Database exists already, nothing to do..."
+    echo "Database '$POSTGRES_DB' exists already, nothing to do - will just show max. 3 lines of any table..."
+    tables=$(psql -U $PGUSER -d $POSTGRES_DB -tAc "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+    for table in $tables; do
+        echo "Table: $table"
+        psql -U $PGUSER -d $POSTGRES_DB -c "SELECT * FROM $table LIMIT 3;"
+    done
 else
-    echo "Database does not exists, creating it..."
-    psql -h $DATABASE_HOST -U $DATABASE_USERNAME -c "CREATE DATABASE \"$DATABASE_NAME\""
+    echo "Database '$POSTGRES_DB' does not exist, creating it..."
+    psql -U $PGUSER -c "CREATE DATABASE $POSTGRES_DB"
 fi
