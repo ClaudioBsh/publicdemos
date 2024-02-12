@@ -66,3 +66,14 @@ Status: Open
 Note: Ask in the fief discussion round
 
 ----------------------------------------------
+
+ISSUE #002: "Internal Server Error" when calling: fief.mydomain.com/admin:
+
+DETAIL #002: 
+...httpx.ReadTimeout
+http code 400, http code 500
+
+SOLUTION #002:
+ ...open... - asked in the fief discussions! => https://github.com/orgs/fief-dev/discussions/335
+
+------------------------------------

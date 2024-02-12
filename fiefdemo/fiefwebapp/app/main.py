@@ -1,47 +1,47 @@
 ####################################
 
+# Taken from the official FIEF documenation: https://docs.fief.dev/integrate/python/fastapi/
+
 # Imports
 
+from typing import Annotated
+
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2AuthorizationCodeBearer
 from fastapi.responses import RedirectResponse
-from auth import AuthenticatedUser, auth, fief
+from fief_client import FiefAccessTokenInfo, FiefAsync
+from fief_client.integrations.fastapi import FiefAuth
+
 from config.settings import settings
 
 ####################################
 
 # App
 
+fief = FiefAsync(settings.fief_server_url, settings.fief_client_id, settings.fief_client_secret)
+
+oauth2 = OAuth2AuthorizationCodeBearer(
+    f"{settings.fief_server_url}/authorize",
+    f"{settings.fief_server_url}/api/token",
+    scopes={"openid": "openid", "offline_access": "offline_access"},
+    auto_error=False,
+)
+
+auth = FiefAuth(fief, oauth2)
+
+AuthenticatedUser = Annotated[FiefAccessTokenInfo, Depends(auth.authenticated())]
+
 app = FastAPI()
 
 ####################################
 
-# Example endpoint which is using authentification (auth.py)
-#@app.get("/user")
-#async def read_users_me(user: AuthenticatedUser = Depends(auth.authenticated())):
-#    return {"user": user}
+# Route(s)
 
-####################################
-
-# Example endpoints which are using manual authentification
-
-# Start Authentificationprocess
-@app.get("/auth/login")
-async def login():
-    redirect_url = "http://fief.mydomain.com/docs/oauth2-redirect"
-    auth_url = await fief.auth_url(redirect_url, scope=["openid"])
-    return RedirectResponse(url=auth_url)
-
-# Callback-Endpoint, which is called after the Authentificationprocess
-@app.get("/auth/callback")
-async def auth_callback(code: str):
-    redirect_url = "http://fief.mydomain.com/docs/oauth2-redirect"
-    try:
-        tokens, userinfo = await fief.auth_callback(code, redirect_url)
-        # Implement your logic
-        print(f"Tokens: {tokens}")
-        print(f"Userinfo: {userinfo}")
-        return {"tokens": tokens, "userinfo": userinfo}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+@app.get("/user")
+async def get_user(
+    access_token_info: FiefAccessTokenInfo = Depends(auth.authenticated()),
+):
+    print(f"TokenInfo: {access_token_info}")
+    return access_token_info
 
 ####################################

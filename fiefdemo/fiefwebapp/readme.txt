@@ -55,11 +55,6 @@ Note all the ID's you got and use it within your config/.env file!
 
 ------------------------------------
 
-"Internal Server Error" (http code 400, http code 500) when calling: fief.mydomain.com/admin
-Solution: ...open... todo - ask in the fief discussions!
-
-------------------------------------
-
 HOSTS:
 
 Instead using localhost (127.0.0.1) we will use an own local domain and will setup therefore this domain (and all subdomains too!)
