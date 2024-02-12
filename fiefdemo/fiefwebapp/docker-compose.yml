@@ -44,10 +44,10 @@ x-fief:
   - REGISTRATION_SESSION_COOKIE_SECURE=${REGISTRATION_SESSION_COOKIE_SECURE}
   - FORWARD_ALLOWED_IPS=${FORWARD_ALLOWED_IPS}
   - TELEMETRY_ENABLED=${TELEMETRY_ENABLED}
-  - FIEF_API_KEY=${FIEF_API_KEY}
-  - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
-  - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
-  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
+#  - FIEF_API_KEY=${FIEF_API_KEY}
+#  - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
+#  - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
+#  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
   depends_on:
   - redis
 
@@ -72,17 +72,17 @@ services:
   api:
     <<: *backend
 # Use command: only if you want to overwrite the default Dockerfile CMD!
-#    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    # HERE - Make external access possible (e.g. from Browser)
-    extra_hosts:
-    - "fief.mydomain.com:host-gateway"
+#    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    # HERE - Make external access possible (e.g. from Browser) => https://medium.com/@TimvanBaarsen/how-to-connect-to-the-docker-host-from-inside-a-docker-container-112b4c71bc66
+#    extra_hosts:
+#    - "fief.mydomain.com:host-gateway"
     labels:
     - "traefik.enable=true"
     - "traefik.http.routers.api.rule=Host(`api.mydomain.com`)"
     - "traefik.http.routers.api.entrypoints=web"
-    - "traefik.http.services.api.loadbalancer.server.port=8000"
+    - "traefik.http.services.api.loadbalancer.server.port=8001"
     expose:
-    - 8000
+    - 8001
 
   db:
     container_name: fief-db
@@ -115,8 +115,8 @@ services:
     - "traefik.http.routers.fief.rule=Host(`fief.mydomain.com`)"
     - "traefik.http.routers.fief.entrypoints=web"
     - "traefik.http.services.fief.loadbalancer.server.port=8000"
-    expose:
-    - 8000
+    ports:
+    - 8000:8000
 
   worker:
     <<: *fief-environment

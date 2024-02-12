@@ -13,4 +13,4 @@ COPY ./app /code/app
 COPY ./config /code/config
 
 # Command to start the fastapi app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

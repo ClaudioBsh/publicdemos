@@ -77,8 +77,8 @@ Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on
 WEB-Page:                 http://mydomain.com
 Traefik-Dashboard:        http://mydomain.com:8080
 FastAPI-Docs              http://api.mydomain.com/docs
-FIEF:                     http://fief.mydomain.com
-FIEF (admin):             http://fief.mydomain.com/admin
+FIEF:                     http://fief.mydomain.com:8000
+FIEF (admin):             http://fief.mydomain.com:8000/admin
 
 ------------------------------------
 
