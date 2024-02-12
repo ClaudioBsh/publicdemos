@@ -6,7 +6,7 @@ WORKDIR /code
 
 # Copy and install requirements
 COPY ./requirements.txt /code/
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --verbose
 
 # Copy source code including config
 COPY ./app /code/app

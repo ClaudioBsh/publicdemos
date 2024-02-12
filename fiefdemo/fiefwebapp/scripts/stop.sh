@@ -37,3 +37,13 @@ for volume in $volumes; do
         docker volume rm $volume
     fi
 done
+
+# Clean none images
+image_ids=$(docker images | awk '/none/ {print $3}')
+if [[ -z "$image_ids" ]]; then
+  exit 0
+fi
+docker rmi $image_ids
+
+# Remove API-Image
+docker rmi fiefwebapp-api:latest
