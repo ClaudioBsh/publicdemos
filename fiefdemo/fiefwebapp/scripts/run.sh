@@ -1,4 +1,10 @@
 #!/bin/bash
+
+if [ ! -f ../config/.env ]; then
+  echo "Caution: 'config/.env' file does not exist! Create it as copy of 'config/.env.template', configure it (you need to run 'scripts/onetime_get_ids.sh' before!) then repeat this script!"
+  exit 1
+fi
+
 echo "doing stop..."
 ./stop.sh
 sleep 3

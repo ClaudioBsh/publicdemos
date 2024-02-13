@@ -7,11 +7,14 @@ x-backend:
   volumes:
   - ./app:/code/app
   - ./config:/code/config
+  - ./app/niceguistorage:/code/.nicegui:rw
   working_dir: /code/app
   environment:
     # Show output live in the console
     PYTHONUNBUFFERED: 1
     PYTHONPATH: "/code"
+    PUID: ${UID}
+    PGID: ${GID}
   depends_on:
     - redis
 

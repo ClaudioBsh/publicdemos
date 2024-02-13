@@ -76,6 +76,7 @@ C:\Windows\System32\drivers\etc\hosts
 Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine):
 WEB-Page:                 http://mydomain.com
 Traefik-Dashboard:        http://mydomain.com:8080
+NiceGUI                   http://api.mydomain.com
 FastAPI-Docs              http://api.mydomain.com/docs
 FIEF:                     http://fief.mydomain.com:8000
 FIEF (admin):             http://fief.mydomain.com:8000/admin

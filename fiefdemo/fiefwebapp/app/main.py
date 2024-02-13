@@ -14,6 +14,9 @@ from fief_client.integrations.fastapi import FiefAuth
 
 from config.settings import settings
 
+# NiceGUI
+import feng
+
 ####################################
 
 # App
@@ -45,3 +48,6 @@ async def get_user(
     return access_token_info
 
 ####################################
+
+# NiceGUI
+feng.init(app)

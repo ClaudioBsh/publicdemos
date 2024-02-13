@@ -1,5 +1,12 @@
+# FIEF
 fastapi
 uvicorn
 makefun
 fief_client
 pydantic-settings
+
+# NiceGUI
+nicegui
+werkzeug
+itsdangerous
+
