@@ -21,6 +21,8 @@ x-backend:
 x-fief:
   &fief-environment
   environment:
+  - PUID=${UID}
+  - PGID=${GID}
   - SECRET=${SECRET}
   - FIEF_CLIENT_ID=${FIEF_CLIENT_ID}
   - FIEF_CLIENT_SECRET=${FIEF_CLIENT_SECRET}
@@ -47,10 +49,14 @@ x-fief:
   - REGISTRATION_SESSION_COOKIE_SECURE=${REGISTRATION_SESSION_COOKIE_SECURE}
   - FORWARD_ALLOWED_IPS=${FORWARD_ALLOWED_IPS}
   - TELEMETRY_ENABLED=${TELEMETRY_ENABLED}
-#  - FIEF_API_KEY=${FIEF_API_KEY}
-#  - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
-#  - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
+  - FIEF_API_KEY=${FIEF_API_KEY}
+  - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
+  - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
 #  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
+#  volumes:
+#  - ./data/fief:/data
+#  extra_hosts:
+#  - "fief.mydomain.com:host-gateway"
   depends_on:
   - redis
 
@@ -117,9 +123,13 @@ services:
     - "traefik.enable=true"
     - "traefik.http.routers.fief.rule=Host(`fief.mydomain.com`)"
     - "traefik.http.routers.fief.entrypoints=web"
+    - "traefik.http.routers.fief.service=fief"
     - "traefik.http.services.fief.loadbalancer.server.port=8000"
-    ports:
-    - 8000:8000
+    - "traefik.http.services.fief.loadbalancer.passhostheader=true"
+    expose:
+    - 8000
+#    ports:
+#    - 8000:8000
 
   worker:
     <<: *fief-environment

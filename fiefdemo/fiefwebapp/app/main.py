@@ -21,7 +21,12 @@ import feng
 
 # App
 
-fief = FiefAsync(settings.fief_server_url, settings.fief_client_id, settings.fief_client_secret)
+fief = FiefAsync(
+    settings.fief_server_url,
+    settings.fief_client_id,
+    settings.fief_client_secret,
+#    host="localhost:8000",
+)
 
 oauth2 = OAuth2AuthorizationCodeBearer(
     f"{settings.fief_server_url}/authorize",
