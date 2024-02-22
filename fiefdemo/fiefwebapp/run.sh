@@ -20,7 +20,7 @@ echo "check install..."
 ./install.sh
 
 echo "doing jinja..."
-./process_jinja.sh"
+./process_jinja.sh
 
 cd ..
 echo "doing start..."

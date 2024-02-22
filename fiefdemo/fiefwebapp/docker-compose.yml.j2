@@ -92,7 +92,7 @@ services:
     labels:
     - "traefik.enable=true"
 {% if fiefdemo_use_ip_port == true %}
-    - "traefik.http.routers.api.rule=Host(`{% fiefdemo_ip %}`)"
+    - "traefik.http.routers.api.rule=Host(`{{ fiefdemo_ip }}`)"
 {% else %}
     - "traefik.http.routers.api.rule=Host(`api.localhost`)"
 {% endif %}
@@ -134,7 +134,7 @@ services:
     labels:
     - "traefik.enable=true"
 {% if fiefdemo_use_ip_port == true %}
-    - "traefik.http.routers.fief.rule=Host(`{% fiefdemo_ip %}`)"
+    - "traefik.http.routers.fief.rule=Host(`{{ fiefdemo_ip }}`)"
 {% else %}
     - "traefik.http.routers.fief.rule=Host(`fiefdemo.localhost`)"
 {% endif %}
@@ -170,7 +170,7 @@ services:
     labels:
     - "traefik.enable=true"
 {% if fiefdemo_use_ip_port == true %}
-    - "traefik.http.routers.web.rule=Host(`{% fiefdemo_ip %}`)"
+    - "traefik.http.routers.web.rule=Host(`{{ fiefdemo_ip }}`)"
 {% else %}
     - "traefik.http.routers.web.rule=Host(`localhost`)"
 {% endif %}
