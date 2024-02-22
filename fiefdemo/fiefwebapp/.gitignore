@@ -1,2 +1,4 @@
 !.gitkeep
 node_modules/
+docker-compose.yml
+index.html

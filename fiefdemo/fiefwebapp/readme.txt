@@ -2,11 +2,12 @@ Short - just do it on first time once:
 ======================================
 - run: ./scripts/onetime_get_ids.sh
 - Note the ID's you got
-- Update the ./config/.env file with values you note before (if not exists, create it as copy from file './config/.env.template')
-- Edit /etc/hosts or on Windows the Windows hosts file (see comments below in the "Long:" Section - Chapter "HOSTS:" => nearly at the end of this document)
+- Update the ./config/.env (j2) file with values you note before (if not exists, create it as copy from file './config/.env.template')
+- Update the ./config/jinja_vars.yml (j2) file with values you need (if not exists, create it as copy from file './config/jinja_vars.yml.template')
 - That's all what you have to configure once!
-- To build and start just run: ./scripts/run.sh
-- Then call in a browser (or use curl or links2 in a Terminal session): http://mydomain.com
+- To build and start just run: ./run.sh
+- Then call in a browser (or use curl or links2 when using a plain Terminal session): http://localhost
+Caution: You can use FIEF (admin) without ssl/tls (https) only when using "localhost"!
 
 
 
@@ -22,6 +23,8 @@ https://docs.fief.dev/integrate/python/fastapi/
 https://github.com/fief-dev/fief/pkgs/container/fief => AMD64 + ARM64:-)
 https://github.com/orgs/fief-dev/discussions
 https://github.com/orgs/fief-dev/discussions/335 => Introduced this FIEF Demo WebApp
+https://www.wheelodex.org/projects/fief-server/
+https://www.wheelodex.org/projects/fief-client/
 
 ------------------------------------
 
@@ -57,29 +60,30 @@ Note all the ID's you got and use it within your config/.env file!
 
 HOSTS:
 
-Instead using localhost (127.0.0.1) we will use an own local domain and will setup therefore this domain (and all subdomains too!)
-in the /etc/hosts of the machine you call from (if it is the same as where you run your docker-compose.yml you have to do it there too)!
-Advantage is, we can call all URL's from any other server then the one we are serving our docker-compose.yml!
+Have in mind, you can use FIEF without https (ssl/tls) on localhost only!
 
-Open on the Machine you want to call from (<IP-Address> is the IP of the Server you are running the docker-compose.yml - if it is the same host use 127.0.0.1):
-sudo nano /etc/hosts
-<IP-Address>     mydomain.com
-<IP-Address>     api.mydomain.com
-<IP-Address>     fief.mydomain.com
+Tipp: 
+If you e.g. run it on a linux terminal only machine within your local network and do you want to call it from your another machine with e.g. Windows Browser on it,
+then you have to call the ip of the linux machine where your FIEFDEMO is running instead "localhost"!
+And because you cannot call something like "subdomain.IP" you should use "ports:" definition for your services within docker-compose.yml,
+then you can call any such service  with "IP:PORT" too.
 
-If using Windows you have to change it here (if you have Windows installed in another Folder then 'C:\Windows' replace this part sure):
-C:\Windows\System32\drivers\etc\hosts
-<IP-Address>     mydomain.com
-<IP-Address>     api.mydomain.com
-<IP-Address>     fief.mydomain.com
+URL-Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine):
+WEB-Page:                 http://localhost
+Traefik-Dashboard:        http://localhost:8080
+NiceGUI                   http://api.localhost
+FastAPI-Docs              http://api.localhost/docs
+FIEF:                     http://fiefdemo.localhost:8000
+FIEF (admin):             http://fiefdemo.localhost:8000/admin
 
-Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine):
-WEB-Page:                 http://mydomain.com
-Traefik-Dashboard:        http://mydomain.com:8080
-NiceGUI                   http://api.mydomain.com
-FastAPI-Docs              http://api.mydomain.com/docs
-FIEF:                     http://fief.mydomain.com:8000
-FIEF (admin):             http://fief.mydomain.com:8000/admin
+IP-Calls (using curl, links2 from a Terminal or from a any other Browser which is available to call your machine running the FIEFDEMO):
+WEB-Page:                 http://<IP>
+Traefik-Dashboard:        http://<IP>:8080
+NiceGUI                   http://<IP>:8001
+FastAPI-Docs              http://<IP>:8001/docs
+FIEF:                     http://<IP>:8000
+FIEF (admin):             http://<IP>:8000/admin => will not work with FIEF-Server 0.27.0, because the need of using 'localhost' or a real domain (ssl/tls - https)!
+                          Think about using 'ngrok' - more details you can find here: https://github.com/orgs/fief-dev/discussions/37
 
 ------------------------------------
 

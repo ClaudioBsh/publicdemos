@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to your Fief-WebApp</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        h1 { color: #333; }
+        a { color: #017BFF; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+{% if fiefdemo_use_ip_port != true %}
+    <h1>Welcome to Localhost</h1>
+    <p>This is the Web-Startpage of your Application. Find below Links to your Services and Documentations.</p>
+    <ul>
+        <li><a href="http://fiefdemo.localhost/login" target="_blank">Fief Login</a></li>
+        <li><a href="http://fiefdemo.localhost/admin" target="_blank">Fief Admin-Panel</a></li>
+        <li><a href="http://api.localhost" target="_blank">NiceGUI Demo Page</a></li>
+        <li><a href="http://api.localhost/docs" target="_blank">FastAPI Documentation</a></li>
+        <li><a href="http://localhost:8080" target="_blank">Traefik Dashboard</a></li>
+    </ul>
+    <p>Use the links above to find out more of your App and how to use!</p>
+    <h2>Practice:</h2>
+    <p>Call the route parametrized within your FastAPI code to understand the login process</p>
+    <ul>
+        <li><a href="http://api.localhost/user" target="_blank">FastAPI /user</a></li>
+    </ul>
+{% else %}
+    <h1>Welcome to {% fiefdemo_ip %}</h1>
+    <p>This is the Web-Startpage of your Application. Find below Links to your Services and Documentations.</p>
+    <ul>
+        <li><a href="http://{% fiefdemo_ip %}:8000/login" target="_blank">Fief Login</a></li>
+        <li><a href="http://{% fiefdemo_ip %}:8000/admin" target="_blank">Fief Admin-Panel (Admin-Panel needs strictly 'localhost' or a real domain (ssl/tls - https) => IP:PORT will not work with FIEF-Server 0.27.0)</a></li>
+        <li><a href="http://{% fiefdemo_ip %}:8001" target="_blank">NiceGUI Demo Page</a></li>
+        <li><a href="http://{% fiefdemo_ip %}:8001/docs" target="_blank">FastAPI Documentation</a></li>
+        <li><a href="http://{% fiefdemo_ip %}:8080" target="_blank">Traefik Dashboard</a></li>
+    </ul>
+    <p>Use the links above to find out more of your App and how to use!</p>
+    <h2>Practice:</h2>
+    <p>Call the route parametrized within your FastAPI code to understand the login process</p>
+    <ul>
+        <li><a href="http://{% fiefdemo_ip %}:8001/user" target="_blank">FastAPI /user</a></li>
+    </ul>
+    <h2>Conclusion:</h2>
+    <p>Think about using 'ngrok' for example instead using 'IP:PORT', if you want to test FIEF/admin functionality too! Find more here: https://github.com/orgs/fief-dev/discussions/37</p>
+{% endif %}
+</div>
+</body>
+</html>

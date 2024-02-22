@@ -1,1 +1,3 @@
 .env
+.env.template
+jinja_vars.yml

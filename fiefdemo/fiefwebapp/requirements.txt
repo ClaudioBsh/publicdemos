@@ -2,11 +2,10 @@
 fastapi
 uvicorn
 makefun
-fief_client
+fief-client
 pydantic-settings
 
 # NiceGUI
 nicegui
 werkzeug
 itsdangerous
-

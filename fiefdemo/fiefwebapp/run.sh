@@ -1,13 +1,27 @@
 #!/bin/bash
 
+cd scripts
+
 if [ ! -f ../config/.env ]; then
-  echo "Caution: 'config/.env' file does not exist! Create it as copy of 'config/.env.template', configure it (you need to run 'scripts/onetime_get_ids.sh' before!) then repeat this script!"
+  echo "Caution: 'config/.env' file does not exist! Create it as copy of 'config/.env.template', configure it (you need to run 'scripts/onetime_get_ids.sh' before!), then repeat this script!"
+  exit 1
+fi
+
+if [ ! -f ../config/jinja_vars.yml ]; then
+  echo "Caution: 'config/jinja_vars.yml' file does not exist! Create it as copy of 'config/jinja_vars.yml.template', configure it, then repeat this script!"
   exit 1
 fi
 
 echo "doing stop..."
 ./stop.sh
 sleep 3
+
+echo "check install..."
+./install.sh
+
+echo "doing jinja..."
+./process_jinja.sh"
+
 cd ..
 echo "doing start..."
 

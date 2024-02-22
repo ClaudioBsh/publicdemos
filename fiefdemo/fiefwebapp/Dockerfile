@@ -4,8 +4,13 @@ FROM python:3.11.2
 # Set working dir within the container
 WORKDIR /code
 
+# Create a virtual environment and activate it
+RUN python -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
 # Copy and install requirements
 COPY ./requirements.txt /code/
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt --verbose
 
 # Copy source code including config

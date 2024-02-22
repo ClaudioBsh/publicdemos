@@ -19,13 +19,13 @@ if [ -f "config/.env" ]; then
   curl -X GET -H "Authorization: Bearer ${FIEF_MAIN_ADMIN_API_KEY}" -H "Host: ${ROOT_DOMAIN}" ${FIEF_SERVER_URL}:${PORT}/admin/api/users/ && echo "\n"
 else
   #Curl only will produce this: {"detail":"CANT_DETERMINE_VALID_WORKSPACE"}
-  #curl http://mydomain.com:8001
+  #curl http://localhost:8001
   #So better use this:
-  curl http://mydomain.com:8001/admin/api/users
+  curl http://localhost:8001/admin/api/users
 fi
 
 # Sleep to have time seeing curl response
 sleep 2
 
 # Call the fief admin url
-links2 http://mydomain.com:8001/admin/
+links2 http://localhost:8001/admin/

@@ -53,10 +53,10 @@ x-fief:
   - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
   - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
 #  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
-#  volumes:
-#  - ./data/fief:/data
+  volumes:
+  - ./data/fief:/data
 #  extra_hosts:
-#  - "fief.mydomain.com:host-gateway"
+#  - "fiefdemo.localhost:host-gateway"
   depends_on:
   - redis
 
@@ -71,8 +71,12 @@ services:
     - "--providers.docker.exposedbydefault=false"
     - "--entrypoints.web.address=:80"
     ports:
+{% if fiefdemo_use_ip_port == true %}
+    - 8080:8080  # For Traefik Dashboard
+{% else %}
     - 80:80
     - 8080:8080  # For Traefik Dashboard
+{% endif %}
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
@@ -84,15 +88,23 @@ services:
 #    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     # HERE - Make external access possible (e.g. from Browser) => https://medium.com/@TimvanBaarsen/how-to-connect-to-the-docker-host-from-inside-a-docker-container-112b4c71bc66
 #    extra_hosts:
-#    - "fief.mydomain.com:host-gateway"
+#    - "fiefdemo.localhost:host-gateway"
     labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.api.rule=Host(`api.mydomain.com`)"
+{% if fiefdemo_use_ip_port == true %}
+    - "traefik.http.routers.api.rule=Host(`{% fiefdemo_ip %}`)"
+{% else %}
+    - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+{% endif %}
     - "traefik.http.routers.api.entrypoints=web"
     - "traefik.http.services.api.loadbalancer.server.port=8001"
+{% if fiefdemo_use_ip_port == true %}
+    ports:
+    - 8001:8001
+{% else %}
     expose:
     - 8001
-
+{% endif %}
   db:
     container_name: fief-db
     image: postgres:16.1-alpine
@@ -121,16 +133,22 @@ services:
     command: fief run-server --port 8000
     labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.fief.rule=Host(`fief.mydomain.com`)"
+{% if fiefdemo_use_ip_port == true %}
+    - "traefik.http.routers.fief.rule=Host(`{% fiefdemo_ip %}`)"
+{% else %}
+    - "traefik.http.routers.fief.rule=Host(`fiefdemo.localhost`)"
+{% endif %}
     - "traefik.http.routers.fief.entrypoints=web"
     - "traefik.http.routers.fief.service=fief"
     - "traefik.http.services.fief.loadbalancer.server.port=8000"
     - "traefik.http.services.fief.loadbalancer.passhostheader=true"
+{% if fiefdemo_use_ip_port == true %}
+    ports:
+    - 8000:8000
+{% else %}
     expose:
     - 8000
-#    ports:
-#    - 8000:8000
-
+{% endif %}
   worker:
     <<: *fief-environment
     container_name: fief-worker
@@ -142,11 +160,20 @@ services:
     container_name: fief-web
     volumes:
     - ./web:/usr/share/nginx/html:ro
+{% if fiefdemo_use_ip_port == true %}
+    ports:
+    - "80:80"
+{% else %}
     expose:
     - "80"
+{% endif %}
     labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.web.rule=Host(`mydomain.com`)"
+{% if fiefdemo_use_ip_port == true %}
+    - "traefik.http.routers.web.rule=Host(`{% fiefdemo_ip %}`)"
+{% else %}
+    - "traefik.http.routers.web.rule=Host(`localhost`)"
+{% endif %}
     - "traefik.http.routers.web.entrypoints=web"
     - "traefik.http.services.web.loadbalancer.server.port=80"
     depends_on:
