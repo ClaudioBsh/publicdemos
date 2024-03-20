@@ -12,6 +12,12 @@ if [ ! -f ../config/jinja_vars.yml ]; then
   exit 1
 fi
 
+if [ ! -f ../data/letsencrypt/acme.json ]; then
+  sudo cp ../data/letsencrypt/acme.json.template ../data/letsencrypt/acme.json
+  sudo chmod 600 ../data/letsencrypt/acme.json
+  sudo chown $USER:$USER ../data/letsencrypt/acme.json
+fi
+
 echo "doing stop..."
 ./stop.sh
 sleep 3
@@ -38,7 +44,9 @@ docker-compose -p "fiefwebapp" --env-file "./config/.env" up --build -d worker
 docker-compose -p "fiefwebapp" --env-file "./config/.env" up --build -d api
 docker-compose -p "fiefwebapp" --env-file "./config/.env" up --build -d traefik
 docker-compose -p "fiefwebapp" --env-file "./config/.env" up --build -d web
+docker-compose -p "fiefwebapp" --env-file "./config/.env" up --build -d dozzle
 
+echo "Build finished - show db content now and start times of the services..."
 echo ""
 cd scripts
 ./show_db.sh

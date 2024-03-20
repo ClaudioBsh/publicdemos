@@ -1,2 +1,8 @@
 fiefdemo_use_ip_port: false
 fiefdemo_ip: 192.168.2.33
+fiefdemo_domain: localhost
+tls_email: "admin@localhost.me"
+tls_key: "xxx"
+tls_dns_token: "xxx"
+use_dozzle: true
+fief_http_only: true

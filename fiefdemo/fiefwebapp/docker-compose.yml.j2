@@ -52,9 +52,14 @@ x-fief:
   - FIEF_API_KEY=${FIEF_API_KEY}
   - FIEF_MAIN_ADMIN_API_KEY=${FIEF_MAIN_ADMIN_API_KEY}
   - FIEF_ADMIN_SESSION_COOKIE_SECURE=${FIEF_ADMIN_SESSION_COOKIE_SECURE}
-#  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
-  volumes:
-  - ./data/fief:/data
+  - DATABASE_SSL_MODE=${DATABASE_SSL_MODE}
+  - UVICORN_SSL_KEYFILE=${UVICORN_SSL_KEYFILE}
+  - UVICORN_SSL_CERTFILE=${UVICORN_SSL_CERTFILE}
+  - CLIENT_REDIRECT_URI_SSL_REQUIRED=${CLIENT_REDIRECT_URI_SSL_REQUIRED}
+  - CSRF_CHECK_ENABLED=${CSRF_CHECK_ENABLED}
+  - LOG_LEVEL
+#  volumes:
+#  - ./data/fief:/data
 #  extra_hosts:
 #  - "fiefdemo.localhost:host-gateway"
   depends_on:
@@ -63,22 +68,55 @@ x-fief:
 services:
 
   traefik:
-    image: traefik:v2.4
+    image: traefik:v2.10.1
     container_name: fief-traefik
+    environment:
+    - CF_API_EMAIL={{ tls_email }}
+    - CF_API_KEY={{ tls_key }}
+    - CF_DNS_API_TOKEN={{ tls_dns_token }}
     command:
+    - "--api.dashboard=true"
+    - "--log.level=INFO"
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+    - "--api.insecure=false"
+{% else %}
     - "--api.insecure=true"
+{% endif %}
     - "--providers.docker=true"
     - "--providers.docker.exposedbydefault=false"
-    - "--entrypoints.web.address=:80"
+#    - "--entrypoints.web.address=:80"
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+    - "--entrypoints.websecure.address=:443"
+    - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+    - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
+    - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+#    - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+    - "--certificatesresolvers.letsencrypt.acme.email={{ tls_email }}"
+    - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+{% endif %}
     ports:
 {% if fiefdemo_use_ip_port == true %}
     - 8080:8080  # For Traefik Dashboard
 {% else %}
-    - 80:80
-    - 8080:8080  # For Traefik Dashboard
+#    - 80:80
+    - 443:443
 {% endif %}
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+    - ./data/letsencrypt:/letsencrypt
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.traefik.entrypoints=websecure
+    - traefik.http.routers.traefik.tls=true
+#    - traefik.http.routers.traefik.rule=Host(`{{ fiefdemo_domain }}`) && PathPrefix(`/traefikdashboard`)
+    - traefik.http.routers.traefik.service=api@internal
+    - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+    - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+#    - traefik.http.services.traefik.loadbalancer.server.port=80
+    - traefik.http.services.traefik.loadbalancer.server.port=443
+    - traefik.http.services.traefik.loadbalancer.passhostheader=true
+{% endif %}
     depends_on:
     - fief
 
@@ -94,9 +132,17 @@ services:
 {% if fiefdemo_use_ip_port == true %}
     - "traefik.http.routers.api.rule=Host(`{{ fiefdemo_ip }}`)"
 {% else %}
-    - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+ #   - "traefik.http.routers.api-nsec.rule=Host(`api.{{ fiefdemo_domain }}`)"
+    - "traefik.http.routers.api.rule=Host(`api.{{ fiefdemo_domain }}`)"
 {% endif %}
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+#    - "traefik.http.routers.api-nsec.entrypoints=web"
+    - "traefik.http.routers.api.entrypoints=websecure"
+    - "traefik.http.routers.api.tls=true"
+    - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+{% else %}
     - "traefik.http.routers.api.entrypoints=web"
+{% endif %}
     - "traefik.http.services.api.loadbalancer.server.port=8001"
 {% if fiefdemo_use_ip_port == true %}
     ports:
@@ -105,6 +151,7 @@ services:
     expose:
     - 8001
 {% endif %}
+
   db:
     container_name: fief-db
     image: postgres:16.1-alpine
@@ -129,32 +176,51 @@ services:
   fief:
     <<: *fief-environment
     container_name: fief-server
-    image: ghcr.io/fief-dev/fief:0.27.0
-    command: fief run-server --port 8000
-    labels:
-    - "traefik.enable=true"
-{% if fiefdemo_use_ip_port == true %}
-    - "traefik.http.routers.fief.rule=Host(`{{ fiefdemo_ip }}`)"
-{% else %}
-    - "traefik.http.routers.fief.rule=Host(`fiefdemo.localhost`)"
-{% endif %}
-    - "traefik.http.routers.fief.entrypoints=web"
-    - "traefik.http.routers.fief.service=fief"
-    - "traefik.http.services.fief.loadbalancer.server.port=8000"
-    - "traefik.http.services.fief.loadbalancer.passhostheader=true"
+#    image: ghcr.io/fief-dev/fief:0.27.0
+    image: ghcr.io/fief-dev/fief:0.28.5
+#    command: fief run-server --port 8000
+    command: fief run-server
+# FIEF workaround
+#    labels:
+#    - "traefik.enable=true"
+#{% if fiefdemo_use_ip_port == true %}
+#    - "traefik.http.routers.fief.rule=Host(`{{ fiefdemo_ip }}`)"
+#{% else %}
+#    - "traefik.http.routers.fief-nsec.rule=Host(`fiefdemo.{{ fiefdemo_domain }}`)"
+#    - "traefik.http.routers.fief.rule=Host(`fiefdemo.{{ fiefdemo_domain }}`)"
+#{% endif %}
+#{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+#    - "traefik.http.routers.fief-nsec.entrypoints=web"
+#    - "traefik.http.routers.fief.entrypoints=websecure"
+#    - "traefik.http.routers.fief.tls=true"
+#    - "traefik.http.routers.fief.tls.certresolver=letsencrypt"
+#{% else %}
+#    - "traefik.http.routers.fief.entrypoints=web"
+#{% endif %}
+#    - "traefik.http.routers.fief.service=fief"
+#    - "traefik.http.services.fief.loadbalancer.server.port=8000"
+#    - "traefik.http.services.fief.loadbalancer.passhostheader=true"
 {% if fiefdemo_use_ip_port == true %}
     ports:
     - 8000:8000
 {% else %}
-    expose:
-    - 8000
+#    expose:
+#    - 8000
+#    ports:
+#    - 8000:8000
+# FIEF workaround
+    ports:
+    - 80:80
 {% endif %}
+
   worker:
     <<: *fief-environment
     container_name: fief-worker
-    image: ghcr.io/fief-dev/fief:0.27.0
+#    image: ghcr.io/fief-dev/fief:0.27.0
+    image: ghcr.io/fief-dev/fief:0.28.5
     command: fief run-worker -p 1 -t 1
 
+# Have in mind, that nginx uses Port 80, not 443!!
   web:
     image: nginx:alpine
     container_name: fief-web
@@ -163,21 +229,77 @@ services:
 {% if fiefdemo_use_ip_port == true %}
     ports:
     - "80:80"
+#    - "443:443"
 {% else %}
     expose:
     - "80"
+#    - "443"
 {% endif %}
     labels:
     - "traefik.enable=true"
 {% if fiefdemo_use_ip_port == true %}
     - "traefik.http.routers.web.rule=Host(`{{ fiefdemo_ip }}`)"
 {% else %}
-    - "traefik.http.routers.web.rule=Host(`localhost`)"
+#    - "traefik.http.routers.web-nsec.rule=Host(`{{ fiefdemo_domain }}`)"
+    - "traefik.http.routers.web.rule=Host(`{{ fiefdemo_domain }}`)"
 {% endif %}
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+#    - "traefik.http.routers.web-nsec.entrypoints=web"
+#    - "traefik.http.routers.web-nsec.middlewares=redirect-to-https"
+    - "traefik.http.routers.web.entrypoints=websecure"
+    - "traefik.http.routers.web.tls=true"
+    - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+{% else %}
     - "traefik.http.routers.web.entrypoints=web"
+{% endif %}
     - "traefik.http.services.web.loadbalancer.server.port=80"
+#    - "traefik.http.services.web.loadbalancer.server.port=443"
     depends_on:
     - traefik
+
+{% if use_dozzle == true %}
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: fief-dozzle
+#    environment:
+#      DOZZLE_AUTH_PROVIDER: forward-proxy
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+{% if fiefdemo_use_ip_port == true %}
+    ports:
+    - "8081:8080"
+{% else %}
+#    expose:
+#    - "8080"
+    ports:
+    - "8081:8080"
+{% endif %}
+    labels:
+    - "traefik.enable=true"
+{% if fiefdemo_use_ip_port == true %}
+#    - "traefik.http.routers.dozzle.rule=Host(`{{ fiefdemo_ip }}`) && PathPrefix(`/dozzle`)"
+    - "traefik.http.routers.dozzle.rule=Host(`dozzle.{{ fiefdemo_ip }}`)"
+{% else %}
+#    - "traefik.http.routers.dozzle-nsec.rule=Host(`{{ fiefdemo_domain }}`) && PathPrefix(`/dozzle`)"
+#    - "traefik.http.routers.dozzle.rule=Host(`{{ fiefdemo_domain }}`) && PathPrefix(`/dozzle`)"
+#    - "traefik.http.routers.dozzle-nsec.rule=Host(`dozzle.{{ fiefdemo_domain }}`)"
+    - "traefik.http.routers.dozzle.rule=Host(`dozzle.{{ fiefdemo_domain }}`)"
+{% endif %}
+{% if fiefdemo_use_ip_port != true and fiefdemo_domain != 'localhost' %}
+#    - "traefik.http.routers.dozzle-nsec.entrypoints=web"
+#    - "traefik.http.routers.dozzle-nsec.middlewares=redirect-to-https"
+    - "traefik.http.routers.dozzle.entrypoints=websecure"
+    - "traefik.http.routers.dozzle.tls=true"
+    - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+{% else %}
+    - "traefik.http.routers.dozzle.entrypoints=web"
+{% endif %}
+    - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+    - "traefik.http.services.dozzle.loadbalancer.passhostheader=true"
+    - "traefik.http.routers.dozzle.service=dozzle"
+    depends_on:
+    - traefik
+{% endif %}
 
 volumes:
   fief-redis-data:

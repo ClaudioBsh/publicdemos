@@ -15,40 +15,132 @@
 <body>
 <div class="container">
 {% if fiefdemo_use_ip_port != true %}
-    <h1>Welcome to Localhost</h1>
+    <h1>Welcome to {{ fiefdemo_domain }}</h1>
     <p>This is the Web-Startpage of your Application. Find below Links to your Services and Documentations.</p>
     <ul>
-        <li><a href="http://fiefdemo.localhost/login" target="_blank">Fief Login</a></li>
-        <li><a href="http://fiefdemo.localhost/admin" target="_blank">Fief Admin-Panel</a></li>
-        <li><a href="http://api.localhost" target="_blank">NiceGUI Demo Page</a></li>
-        <li><a href="http://api.localhost/docs" target="_blank">FastAPI Documentation</a></li>
-        <li><a href="http://localhost:8080" target="_blank">Traefik Dashboard</a></li>
+{% if domain == 'localhost' or fief_http_only == true %}
+        <li><a href="http://fiefdemo.{{ fiefdemo_domain }}/login" target="_blank">Fief Login</a></li>
+        <li><a href="http://fiefdemo.{{ fiefdemo_domain }}/admin" target="_blank">Fief Admin-Panel</a></li>
+        <li><a href="http://fiefdemo.{{ fiefdemo_domain }}/docs" target="_blank">Fief Swagger</a></li>
+        <li><a href="http://api.{{ fiefdemo_domain }}" target="_blank">NiceGUI Demo Page</a></li>
+        <li><a href="http://api.{{ fiefdemo_domain }}/docs" target="_blank">FastAPI Swagger</a></li>
+        <li><a href="http://{{ fiefdemo_domain }}:8080" target="_blank">Traefik Dashboard</a></li>
+{% if use_dozzle == true %}
+        <li><a href="http://dozzle.{{ fiefdemo_domain }}" target="_blank">Dozzle</a></li>
+{% endif %}
+{% else %}
+        <li><a href="https://fiefdemo.{{ fiefdemo_domain }}/login" target="_blank">Fief Login</a></li>
+        <li><a href="https://fiefdemo.{{ fiefdemo_domain }}/admin" target="_blank">Fief Admin-Panel</a></li>
+        <li><a href="https://fiefdemo.{{ fiefdemo_domain }}/docs" target="_blank">Fief Swagger</a></li>
+        <li><a href="https://api.{{ fiefdemo_domain }}" target="_blank">NiceGUI Demo Page</a></li>
+        <li><a href="https://api.{{ fiefdemo_domain }}/docs" target="_blank">FastAPI Swagger</a></li>
+        <li><a href="https://{{ fiefdemo_domain }}:8080" target="_blank">Traefik Dashboard</a></li>
+{% if use_dozzle == true %}
+        <li><a href="https://dozzle.{{ fiefdemo_domain }}" target="_blank">Dozzle</a></li>
+{% endif %}
+{% endif %}
     </ul>
     <p>Use the links above to find out more of your App and how to use!</p>
     <h2>Practice:</h2>
     <p>Call the route parametrized within your FastAPI code to understand the login process</p>
     <ul>
-        <li><a href="http://api.localhost/user" target="_blank">FastAPI /user</a></li>
+{% if domain == 'localhost' or fief_http_only == true %}
+        <li><a href="http://api.{{ fiefdemo_domain }}/user" target="_blank">FastAPI /user</a></li>
+{% else %}
+        <li><a href="https://api.{{ fiefdemo_domain }}/user" target="_blank">FastAPI /user</a></li>
+{% endif %}
+        <li><button onclick="getUserWithToken()">FastAPI /user with Access-Token</button></li>
     </ul>
+    <p id="apiResponse">Here you will see 'FastAPI /user with Access-Token' answer!</p>
+    <p>Use as Access-Token the one you get from Swagger ('FastAPI Documentation' above) under '/docs' for route '/user'!</p>
 {% else %}
     <h1>Welcome to {{ fiefdemo_ip }}</h1>
     <p>This is the Web-Startpage of your Application. Find below Links to your Services and Documentations.</p>
     <ul>
         <li><a href="http://{{ fiefdemo_ip }}:8000/login" target="_blank">Fief Login</a></li>
         <li><a href="http://{{ fiefdemo_ip }}:8000/admin" target="_blank">Fief Admin-Panel (Admin-Panel needs strictly 'localhost' or a real domain (ssl/tls - https) => IP:PORT will not work with FIEF-Server 0.27.0)</a></li>
+        <li><a href="http://{{ fiefdemo_ip }}:8000/docs" target="_blank">Fief Swagger</a></li>
         <li><a href="http://{{ fiefdemo_ip }}:8001" target="_blank">NiceGUI Demo Page</a></li>
-        <li><a href="http://{{ fiefdemo_ip }}:8001/docs" target="_blank">FastAPI Documentation</a></li>
+        <li><a href="http://{{ fiefdemo_ip }}:8001/docs" target="_blank">FastAPI Swagger</a></li>
         <li><a href="http://{{ fiefdemo_ip }}:8080" target="_blank">Traefik Dashboard</a></li>
+{% if use_dozzle == true %}
+        <li><a href="http://{{ fiefdemo_ip }}:8081" target="_blank">Dozzle</a></li>
+{% endif %}
     </ul>
     <p>Use the links above to find out more of your App and how to use!</p>
     <h2>Practice:</h2>
     <p>Call the route parametrized within your FastAPI code to understand the login process</p>
     <ul>
         <li><a href="http://{{ fiefdemo_ip }}:8001/user" target="_blank">FastAPI /user</a></li>
+        <li><button onclick="getUserWithToken()">FastAPI /user with Access-Token</button></li>
     </ul>
+    <p id="apiResponse">FastAPI-Request with Access-Token answer:</p>
+    <p>Use as Access-Token the one you get from Swagger ('FastAPI Swagger' above) under '/docs' for route '/user'!</p>
     <h2>Conclusion:</h2>
     <p>Think about using 'ngrok' for example instead using 'IP:PORT', if you want to test FIEF/admin functionality too! Find more informations about it here: https://github.com/orgs/fief-dev/discussions/37</p>
 {% endif %}
 </div>
+
+<script>
+
+var lastToken = "";
+function getUserWithToken() {
+    var token = prompt("Please enter your access token:", lastToken);
+    if (token == null || token == "") {
+        alert("No access token provided.");
+        document.getElementById("apiResponse").innerHTML = "No access token provided.";
+    } else {
+        lastToken = token;
+        $.ajax({
+            url: "gapi/user",
+            type: "GET",
+            beforeSend: function(xhr){
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            success: function(response) {
+                // Behandle die Antwort
+                console.log(response);
+                document.getElementById("apiResponse").innerHTML = "Response: " + JSON.stringify(response);
+            },
+            error: function(xhr, status, error) {
+                // Behandle den Fehler
+                console.error("Error: " + status + " - " + error);
+                alert("An error occurred: " + status + " - " + error);
+                document.getElementById("apiResponse").innerHTML = "An error occurred: " + status + " - " + error;
+            }
+        });
+    }
+}
+
+function postDataWithToken() {
+    var token = prompt("Please enter your access token:", lastToken);
+    if (token == null || token == "") {
+        document.getElementById("apiResponse").innerHTML = "No access token provided.";
+    } else {
+        lastToken = token;
+        var postData = {
+            key1: "value1",
+            key2: "value2"
+        };
+        $.ajax({
+            url: "gapi/some_post_endpoint",
+            type: "POST",
+            contentType: "application/json",
+            beforeSend: function(xhr){
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            data: JSON.stringify(postData),
+            success: function(response) {
+                document.getElementById("apiResponse").innerHTML = "Response: " + JSON.stringify(response);
+            },
+            error: function(xhr, status, error) {
+                document.getElementById("apiResponse").innerHTML = "An error occurred: " + status + " - " + error;
+            }
+        });
+    }
+}
+
+</script>
+
 </body>
 </html>

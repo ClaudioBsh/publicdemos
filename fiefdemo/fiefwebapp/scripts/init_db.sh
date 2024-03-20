@@ -3,6 +3,7 @@ set -e
 
 # WILL BE CALLED FROM INSIDE FIEF-DB CONTAINER!
 
+export PAGER=cat
 export PGPASSWORD=$POSTGRES_PASSWORD
 
 echo "All tables:"

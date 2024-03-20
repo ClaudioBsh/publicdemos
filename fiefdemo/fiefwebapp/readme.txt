@@ -68,22 +68,144 @@ then you have to call the ip of the linux machine where your FIEFDEMO is running
 And because you cannot call something like "subdomain.IP" you should use "ports:" definition for your services within docker-compose.yml,
 then you can call any such service  with "IP:PORT" too.
 
-URL-Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine):
+General:
+Have in mind that for your Host you running FIEF on, you have to configure your Router/Firewall (protocoll 'tcp')!
+It needs to be open on Port 8000 (FIEF Default Port) and optional Port 8080 for using Traefik-Dashboard!
+And sure on Ports 80 and 443 for http/https!
+
+URL-Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine) localhost:
 WEB-Page:                 http://localhost
 Traefik-Dashboard:        http://localhost:8080
 NiceGUI                   http://api.localhost
 FastAPI-Docs              http://api.localhost/docs
-FIEF:                     http://fiefdemo.localhost:8000
+FIEF (login):             http://fiefdemo.localhost:8000/login
 FIEF (admin):             http://fiefdemo.localhost:8000/admin
+
+URL-Calls (using curl, links2 from a Terminal or from a Browser if you have a GUI on your Machine) with a real ssl/tls domain:
+WEB-Page:                 https://yourdomain.xx
+Traefik-Dashboard:        https://yourdomain.xx:8080
+NiceGUI                   https://api.yourdomain.xx
+FastAPI-Docs              https://api.yourdomain.xx/docs
+FIEF (login):             https://fiefdemo.yourdomain.xx/login
+FIEF (admin):             https://fiefdemo.yourdomain.xx/admin
 
 IP-Calls (using curl, links2 from a Terminal or from a any other Browser which is available to call your machine running the FIEFDEMO):
 WEB-Page:                 http://<IP>
 Traefik-Dashboard:        http://<IP>:8080
 NiceGUI                   http://<IP>:8001
 FastAPI-Docs              http://<IP>:8001/docs
-FIEF:                     http://<IP>:8000
+FIEF (login):             http://<IP>:8000/login
 FIEF (admin):             http://<IP>:8000/admin => will not work with FIEF-Server 0.27.0, because the need of using 'localhost' or a real domain (ssl/tls - https)!
                           Think about using 'ngrok' - more details you can find here: https://github.com/orgs/fief-dev/discussions/37
 
 ------------------------------------
 
+If you use Raspbian (Raspberry) instead Ubuntu/Debian and get in trouble with missing Python-Packages when running 'run.sh':
+
+Be sure you have Python3 with PIP3 installed!
+
+Iy yes, then open a terminal and call these commands:
+sudo apt install python3-venv python3-pip
+cd <root_of_your_sourcecode_folder>
+python3 -m venv venv
+source venv/bin/activate
+pip install Jinja2
+pip install PyYaml
+
+Now you should be able to use 'run.sh' on Raspbian too.
+
+------------------------------------
+
+Router / Firewall:
+
+Please make sure, that in case you use an external Domain that on the environment of the FIEF-Host
+you have to give the following Ports open (protocoll is 'tcp'):
+80	=> http
+443	=> https
+8000	=> FIEF
+8080	=> Traefik-Dashboard (This is optional, only needed, if you want to access Traefik-Dashboard on PORT 8080)
+
+------------------------------------
+
+"Http Code 526" in case you use a public domain which you are the owner from:
+
+Guess you use a DNS provider like e.g. Cloudflare and you did change from http to https or vice versa,
+then you have temporary to deactivate "proxied" mode on your DNS-Provider-URL-Page for the domain (and for each subdomain too!!) you use,
+wait at least about 5min (sometimes more, but should not more then 20min), then test url access again.
+You could additionaly purge the cache - find it within your DNS-Provider-Account!
+
+After the wait time is over and access was working again, you can switch back to "proxied" mode.
+
+If it is still not working, you have to check your Traefik-Service configuration and your DNS-Provider configuration at all!
+
+See more:
+
+https://developers.cloudflare.com/ssl/troubleshooting/general-ssl-errors/
+Have in mind - Cloudflare free account supports only:
+subdomain.domain.com
+It does not support:
+sub.subdomain.domain.com
+For using this, you need to pay Cloudflare!
+
+https://community.cloudflare.com/t/ssl-error-526-out-of-a-sudden-lets-encrypt-cert-still-valid-for-59-days-and-no-changes/433395/4
+It could help to change "SSL/TLS" from "Full (strict)" to "Full" (this affect you can test fast, you have normaly not to wait)
+and/or pause your Cloudflare, try the access to your domain, if it is accessible again, unpause Cloudflare.
+
+------------------------------------
+
+Error (FIEF Server logs) "invalid_grant":
+
+This error can have many different problems as shown here:
+https://blog.timekit.io/google-oauth-invalid-grant-nightmare-and-how-to-fix-it-9f4efaf1da35#.eqa5iwbkt
+Short description: 
+RFC 6749 OAuth 2.0 defined invalid_grant as: 
+The provided authorization grant (e.g., authorization code, resource owner credentials)
+or refresh token is invalid, expired, revoked, does not match the redirection URI used
+in the authorization request, or was issued to another client.
+
+Try this so solve any error around "invalid_grant":
+
+First of all make sure tls/acme is working fine!
+If you unproxied get error unsecure website but acme.json is created,
+then it seems traefik does not handle ssl/tls correctly!
+This warning will not pop up when letsencrypt, acme and traefik are working fine together!
+Make sure:
+- acme.json has permission 600
+- Owner/Group is same as the user who is starting containers (should not be user root)
+- Do not use letsencrypt staging server
+- Delete any cookie from you Browser regarding FIEF
+
+When you change your DNS settings e.g. within Cloudflare, think on to do these steps:
+- stop all containers 
+- remove acme.json
+- dns unproxy domain and all subdomains 
+- dns ssl/tls to full strict 
+- dns cache config purge all 
+- wait 5-20min 
+- start containers 
+- wait 1min so letsencrypt can create whole acme.json 
+- test fiefdemo..../admin 
+- if it is working now, fine, change dns to proxied
+- dns cache config purge all 
+- stop all containers 
+- remove acme.json 
+- wait 5-20min 
+- start containers 
+- wait 1min so letsencrypt can create whole acme.json
+- test fiefdemo..../admin
+- should be fine
+
+When testing change DNS Caching Browser-Cache-TTL to 2min
+For prod much higher, e.g. 4h or 1 day
+
+------------------------------------
+
+With FIEF 0.28.5 (and lower) SSL/TLS with real domain got not running fine, the "/admin" path does not work successfull:
+
+The FIEF Author is working on this issue: https://github.com/orgs/fief-dev/discussions/347 and https://github.com/fief-dev/fief/issues/349
+
+As a workaround use FIEF as http only and not using Traefik, use Traefik for https only services.
+
+So current version of this Demo is using this workaround!
+
+------------------------------------

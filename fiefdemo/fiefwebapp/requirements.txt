@@ -9,3 +9,6 @@ pydantic-settings
 nicegui
 werkzeug
 itsdangerous
+
+# NiceGUI / FIEF communication
+requests

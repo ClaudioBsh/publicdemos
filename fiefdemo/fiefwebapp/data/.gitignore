@@ -1,3 +1,5 @@
 /fief/*
 !/fief/db
 !/fief/db/.gitkeep
+/letsencrypt/*
+!/letsencrypt/acme.json.template

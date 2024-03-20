@@ -1,5 +1,5 @@
 # Use official
-FROM python:3.11.2
+FROM python:3.12
 
 # Set working dir within the container
 WORKDIR /code
